@@ -1,64 +1,205 @@
-import { Camera, ClipboardCheck, MapPin, Timer } from "lucide-react";
+import { useState } from "react";
+import { Navigate, Route, Routes, useNavigate } from "react-router";
+import AttendanceHistory from "./components/AttendanceHistory.jsx";
+import Dashboard from "./components/Dashboard.jsx";
+import History from "./components/History.jsx";
+import LoginPage from "./components/LoginPage.jsx";
+import OfflineIndicator from "./components/OfflineIndicator.jsx";
+import Reports from "./components/Reports.jsx";
+import TaskDetail from "./components/TaskDetail.jsx";
+import TaskExecution from "./components/TaskExecution.jsx";
+import TaskList from "./components/TaskList.jsx";
+
+const viewToRoute = {
+  login: "login",
+  dashboard: "dashboard",
+  tasks: "tasks",
+  "task-detail": "task-detail",
+  "task-execution": "task-execution",
+  history: "history",
+  reports: "reports",
+  "attendance-history": "attendance-history",
+};
 
 export default function PetugasHome() {
-  const panels = [
-    {
-      title: "Absensi Pintar",
-      description: "Check-in lokasi tugas dan pantau jam kerja harian.",
-      icon: Timer,
-      color: "bg-blue-100 text-blue-700",
-    },
-    {
-      title: "Unggah Foto Bukti",
-      description: "Upload foto sebelum dan sesudah perbaikan di lapangan.",
-      icon: Camera,
-      color: "bg-green-100 text-green-700",
-    },
-    {
-      title: "Daftar Tugas",
-      description: "Lihat tugas aktif, jadwal, dan progress pekerjaan.",
-      icon: ClipboardCheck,
-      color: "bg-purple-100 text-purple-700",
-    },
-    {
-      title: "Navigasi Lokasi",
-      description: "Akses titik lokasi pekerjaan dan rute tercepat.",
-      icon: MapPin,
-      color: "bg-yellow-100 text-yellow-700",
-    },
-  ];
+  const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState(null);
+  const [selectedTask, setSelectedTask] = useState(null);
+
+  const handleLogin = (userData) => {
+    setCurrentUser(userData);
+    navigate("/petugas/dashboard", { replace: true });
+  };
+
+  const handleLogout = () => {
+    if (window.confirm("Apakah Anda yakin ingin keluar?")) {
+      setCurrentUser(null);
+      setSelectedTask(null);
+      navigate("/petugas/login", { replace: true });
+    }
+  };
+
+  const handleNavigate = (view, data = null) => {
+    if (data) {
+      setSelectedTask(data);
+    }
+
+    const route = viewToRoute[view] ?? "dashboard";
+    navigate(`/petugas/${route}`);
+  };
+
+  const handleSelectTask = (task) => {
+    setSelectedTask(task);
+    navigate("/petugas/task-detail");
+  };
+
+  const handleStartTask = (task) => {
+    const updatedTask = {
+      ...task,
+      status: "in_progress",
+      startedAt: new Date().toISOString(),
+    };
+    setSelectedTask(updatedTask);
+    navigate("/petugas/task-execution");
+  };
+
+  const handleCompleteTask = (completionData) => {
+    console.log("Task completed:", completionData);
+    alert("Tugas berhasil diselesaikan! Data telah disimpan.");
+    setSelectedTask(null);
+    navigate("/petugas/dashboard");
+  };
+
+  const handleBackFromTaskDetail = () => {
+    navigate("/petugas/tasks");
+    setSelectedTask(null);
+  };
+
+  const handleBackFromExecution = () => {
+    navigate("/petugas/task-detail");
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h2 className="text-2xl font-bold text-gray-900">Modul Petugas</h2>
-          <p className="text-sm text-gray-600">
-            Area kerja petugas untuk absensi, dokumentasi, dan tugas lapangan.
-          </p>
-        </div>
-      </header>
+    <div className="w-full min-h-screen">
+      {currentUser && <OfflineIndicator />}
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {panels.map((panel) => (
-            <div
-              key={panel.title}
-              className="bg-white rounded-xl border border-gray-100 shadow-sm p-6"
-            >
-              <div
-                className={`w-12 h-12 rounded-lg flex items-center justify-center ${panel.color}`}
-              >
-                <panel.icon className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mt-4">
-                {panel.title}
-              </h3>
-              <p className="text-sm text-gray-600 mt-2">{panel.description}</p>
-            </div>
-          ))}
-        </div>
-      </main>
+      <Routes>
+        <Route
+          index
+          element={
+            <Navigate
+              to={currentUser ? "/petugas/dashboard" : "/petugas/login"}
+              replace
+            />
+          }
+        />
+        <Route path="login" element={<LoginPage onLogin={handleLogin} />} />
+        <Route
+          path="dashboard"
+          element={
+            currentUser ? (
+              <Dashboard
+                user={currentUser}
+                onNavigate={handleNavigate}
+                onLogout={handleLogout}
+              />
+            ) : (
+              <Navigate to="/petugas/login" replace />
+            )
+          }
+        />
+        <Route
+          path="tasks"
+          element={
+            currentUser ? (
+              <TaskList
+                user={currentUser}
+                onNavigate={handleNavigate}
+                onSelectTask={handleSelectTask}
+              />
+            ) : (
+              <Navigate to="/petugas/login" replace />
+            )
+          }
+        />
+        <Route
+          path="task-detail"
+          element={
+            currentUser && selectedTask ? (
+              <TaskDetail
+                task={selectedTask}
+                user={currentUser}
+                onBack={handleBackFromTaskDetail}
+                onStartTask={handleStartTask}
+                onNavigate={handleNavigate}
+              />
+            ) : (
+              <Navigate to={currentUser ? "/petugas/tasks" : "/petugas/login"} replace />
+            )
+          }
+        />
+        <Route
+          path="task-execution"
+          element={
+            currentUser && selectedTask ? (
+              <TaskExecution
+                task={selectedTask}
+                user={currentUser}
+                onComplete={handleCompleteTask}
+                onBack={handleBackFromExecution}
+              />
+            ) : (
+              <Navigate to={currentUser ? "/petugas/tasks" : "/petugas/login"} replace />
+            )
+          }
+        />
+        <Route
+          path="history"
+          element={
+            currentUser ? (
+              <History
+                user={currentUser}
+                onNavigate={handleNavigate}
+                onViewDetail={handleSelectTask}
+              />
+            ) : (
+              <Navigate to="/petugas/login" replace />
+            )
+          }
+        />
+        <Route
+          path="reports"
+          element={
+            currentUser ? (
+              <Reports user={currentUser} onNavigate={handleNavigate} />
+            ) : (
+              <Navigate to="/petugas/login" replace />
+            )
+          }
+        />
+        <Route
+          path="attendance-history"
+          element={
+            currentUser ? (
+              <AttendanceHistory
+                user={currentUser}
+                onNavigate={handleNavigate}
+              />
+            ) : (
+              <Navigate to="/petugas/login" replace />
+            )
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to={currentUser ? "/petugas/dashboard" : "/petugas/login"}
+              replace
+            />
+          }
+        />
+      </Routes>
     </div>
   );
 }

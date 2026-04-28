@@ -8,4 +8,10 @@
   Run `npm i` to install the dependencies.
 
   Run `npm run dev` to start the development server.
+
+  ## Routes
+
+  - `/warga` - Modul warga
+  - `/admin` - Modul admin
+  - `/petugas/*` - Modul petugas (login, dashboard, tugas, laporan, absensi)
   
