@@ -9,7 +9,7 @@ export default function App() {
       <Route path="/" element={<Navigate to="/warga" replace />} />
       <Route path="/warga" element={<WargaModule />} />
       <Route path="/admin" element={<AdminHome />} />
-      <Route path="/petugas" element={<PetugasHome />} />
+      <Route path="/petugas/*" element={<PetugasHome />} />
       <Route path="*" element={<Navigate to="/warga" replace />} />
     </Routes>
   );
