@@ -1,4 +1,4 @@
-# Sistem AduAja
+# AduAja - Sistem Informasi Pengaduan dan Aspirasi Masyarakat
 ## Kelompok PLR - Pemuda Legend Revolusioner
 ### Anggota:
 1. 	Riyan Ansari Harahap - 241401003
